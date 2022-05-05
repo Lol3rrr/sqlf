@@ -1,5 +1,6 @@
 use crate::{
     fmt::{self, FieldsBuilder, FmtBuilder},
+    sql::Sql,
     Fields,
 };
 
@@ -10,7 +11,7 @@ impl Fields for &str {
         std::iter::once(self.to_string())
     }
 
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -24,7 +25,7 @@ impl Fields for String {
         std::iter::once(self.clone())
     }
 
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -39,7 +40,7 @@ impl Fields for Vec<String> {
         self.clone().into_iter()
     }
 
-    fn format<F>(&self, fmt: &mut F) -> String
+    fn format<F>(&self, fmt: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -63,7 +64,7 @@ impl Fields for &[&str] {
             .into_iter()
     }
 
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -80,7 +81,7 @@ impl Fields for &[String] {
             .into_iter()
     }
 
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -98,7 +99,7 @@ impl<const N: usize> Fields for &[&str; N] {
             .into_iter()
     }
 
-    fn format<F>(&self, fmt: &mut F) -> String
+    fn format<F>(&self, fmt: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
@@ -121,7 +122,7 @@ impl Fields for AllFields {
         std::iter::empty()
     }
 
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {

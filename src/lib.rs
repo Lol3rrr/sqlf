@@ -4,9 +4,10 @@
 
 use std::collections::HashSet;
 
+use sql::Sql;
 use verify::{RootTableDefinitions, VerifyError, VerifyTable};
 
-mod sql;
+pub mod sql;
 
 mod condition;
 pub use condition::{And, Or};
@@ -35,16 +36,16 @@ pub trait Table {
     ///
     /// Supplying different formatters allows for adjusting between different SQL Flavors depending
     /// on the actual Target Database
-    fn format<F>(&self, fmt: &mut F) -> String
+    fn format<F>(&self, fmt: &mut F) -> Sql
     where
         F: fmt::Formatter;
 }
 impl Table for &str {
-    fn format<F>(&self, _fmt: &mut F) -> String
+    fn format<F>(&self, _fmt: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
-        self.to_string()
+        Sql::new(*self)
     }
 }
 impl VerifyTable for &str {
@@ -58,11 +59,11 @@ impl VerifyTable for &str {
     }
 }
 impl Table for String {
-    fn format<F>(&self, _: &mut F) -> String
+    fn format<F>(&self, _: &mut F) -> Sql
     where
         F: fmt::Formatter,
     {
-        self.to_string()
+        Sql::new(self)
     }
 }
 impl VerifyTable for String {
@@ -79,7 +80,7 @@ impl VerifyTable for String {
 /// Generalises over one or multiple Conditions
 pub trait Condition {
     /// Formats the Condition using the provided Formatter
-    fn format<F>(&self, fmt: &mut F) -> Option<String>
+    fn format<F>(&self, fmt: &mut F) -> Option<Sql>
     where
         F: fmt::Formatter;
 
@@ -111,7 +112,7 @@ pub trait Fields {
     fn to_iterator(&self) -> Self::FieldIter;
 
     /// Formats the Fields using the provided Formatter
-    fn format<F>(&self, fmt: &mut F) -> String
+    fn format<F>(&self, fmt: &mut F) -> Sql
     where
         F: fmt::Formatter;
 }

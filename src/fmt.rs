@@ -1,13 +1,13 @@
 //! TODO
 
-use crate::{Condition, Fields, Table};
+use crate::{sql::Sql, Condition, Fields, Table};
 
 pub mod sqlite;
 
 /// An underlying Trait for the Formatting
 pub trait FmtBuilder {
     /// Converts the current Builder into the final SQL String
-    fn finish(&mut self) -> String;
+    fn finish(&mut self) -> Sql;
 }
 
 /// The Trait describing the Target Formatters
@@ -57,11 +57,11 @@ pub trait FieldsBuilder: FmtBuilder {
 /// The Builder Trait for Conditionals
 pub trait ConditionBuilder: FmtBuilder {
     /// Generates the SQL for an Equals comparison between the Two elements
-    fn equal(self, left: String, right: String) -> String;
+    fn equal(self, left: Sql, right: Sql) -> Sql;
 
     /// Combines the two sides with a logical AND
-    fn and(self, left: String, right: String) -> String;
+    fn and(self, left: Sql, right: Sql) -> Sql;
 
     /// Combines the two sides with a logical OR
-    fn or(self, left: String, right: String) -> String;
+    fn or(self, left: Sql, right: Sql) -> Sql;
 }

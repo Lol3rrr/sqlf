@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     fmt::{FmtBuilder, SelectBuilder},
+    sql::Sql,
     verify::{RootTableDefinitions, VerifyError, VerifyTable},
     Condition, Fields, Table,
 };
@@ -24,7 +25,7 @@ where
     F: Fields,
     C: Condition,
 {
-    fn format<FF>(&self, fmt: &mut FF) -> String
+    fn format<FF>(&self, fmt: &mut FF) -> Sql
     where
         FF: crate::fmt::Formatter,
     {

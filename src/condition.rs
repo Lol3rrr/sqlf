@@ -1,10 +1,11 @@
 use crate::{
     fmt::{self, ConditionBuilder},
+    sql::Sql,
     Condition,
 };
 
 impl Condition for () {
-    fn format<F>(&self, _: &mut F) -> Option<String>
+    fn format<F>(&self, _: &mut F) -> Option<Sql>
     where
         F: fmt::Formatter,
     {
@@ -17,14 +18,14 @@ where
     S1: AsRef<str>,
     S2: AsRef<str>,
 {
-    fn format<F>(&self, fmt: &mut F) -> Option<String>
+    fn format<F>(&self, fmt: &mut F) -> Option<Sql>
     where
         F: fmt::Formatter,
     {
-        Some(
-            fmt.condition()
-                .equal(self.0.as_ref().to_string(), self.1.as_ref().to_string()),
-        )
+        let left = Sql::new(self.0.as_ref());
+        let right = Sql::new(self.1.as_ref());
+
+        Some(fmt.condition().equal(left, right))
     }
 }
 
@@ -54,7 +55,7 @@ where
     L: Condition,
     R: Condition,
 {
-    fn format<F>(&self, fmt: &mut F) -> Option<String>
+    fn format<F>(&self, fmt: &mut F) -> Option<Sql>
     where
         F: fmt::Formatter,
     {
@@ -91,7 +92,7 @@ where
     L: Condition,
     R: Condition,
 {
-    fn format<F>(&self, fmt: &mut F) -> Option<String>
+    fn format<F>(&self, fmt: &mut F) -> Option<Sql>
     where
         F: fmt::Formatter,
     {

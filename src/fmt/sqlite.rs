@@ -1,6 +1,6 @@
 //! TODO
 
-use crate::{Condition, Fields, Select, Table};
+use crate::{sql::Sql, Condition, Fields, Select, Table};
 
 use super::{ConditionBuilder, FieldsBuilder, FmtBuilder, Formatter, SelectBuilder};
 
@@ -14,7 +14,7 @@ impl SqliteFormatter {
     }
 
     /// Formats the given Select Statement
-    pub fn format_select<T, F, C>(&mut self, s: &Select<T, F, C>) -> String
+    pub fn format_select<T, F, C>(&mut self, s: &Select<T, F, C>) -> Sql
     where
         T: Table,
         F: Fields,
@@ -52,9 +52,9 @@ impl Formatter for SqliteFormatter {
 
 /// The Builder for Select Statements
 pub struct SqliteSelectBuilder {
-    table: Option<String>,
-    fields: Option<String>,
-    condition: Option<String>,
+    table: Option<Sql>,
+    fields: Option<Sql>,
+    condition: Option<Sql>,
     root: SqliteFormatter,
 }
 
@@ -70,16 +70,18 @@ impl SqliteSelectBuilder {
 }
 
 impl FmtBuilder for SqliteSelectBuilder {
-    fn finish(&mut self) -> String {
+    fn finish(&mut self) -> Sql {
         let table_str = self.table.as_ref().expect("The Table should be set");
         let field_str = self.fields.as_ref().expect("The Fields should be set");
 
         match self.condition.as_ref() {
             Some(cond) if !cond.is_empty() => {
-                format!("SELECT {} FROM ({}) WHERE {}", field_str, table_str, cond)
+                let raw_str = format!("SELECT {} FROM ({}) WHERE {}", field_str, table_str, cond);
+                Sql::new(raw_str)
             }
             _ => {
-                format!("SELECT {} FROM ({})", field_str, table_str)
+                let raw_str = format!("SELECT {} FROM ({})", field_str, table_str);
+                Sql::new(raw_str)
             }
         }
     }
@@ -125,7 +127,7 @@ impl SqliteFieldsBuilder {
 }
 
 impl FmtBuilder for SqliteFieldsBuilder {
-    fn finish(&mut self) -> String {
+    fn finish(&mut self) -> Sql {
         let raw_inner = self
             .entries
             .iter()
@@ -133,7 +135,7 @@ impl FmtBuilder for SqliteFieldsBuilder {
             .intersperse(",")
             .collect::<String>();
 
-        format!("({})", raw_inner)
+        Sql::new(format!("({})", raw_inner))
     }
 }
 impl FieldsBuilder for SqliteFieldsBuilder {
@@ -152,20 +154,20 @@ impl SqliteConditionBuilder {
 }
 
 impl FmtBuilder for SqliteConditionBuilder {
-    fn finish(&mut self) -> String {
+    fn finish(&mut self) -> Sql {
         todo!()
     }
 }
 impl ConditionBuilder for SqliteConditionBuilder {
-    fn equal(self, left: String, right: String) -> String {
-        format!("{}={}", left, right)
+    fn equal(self, left: Sql, right: Sql) -> Sql {
+        Sql::new(format!("{}={}", left, right))
     }
 
-    fn and(self, left: String, right: String) -> String {
-        format!("({}) AND ({})", left, right)
+    fn and(self, left: Sql, right: Sql) -> Sql {
+        Sql::new(format!("({}) AND ({})", left, right))
     }
 
-    fn or(self, left: String, right: String) -> String {
-        format!("({}) OR ({})", left, right)
+    fn or(self, left: Sql, right: Sql) -> Sql {
+        Sql::new(format!("({}) OR ({})", left, right))
     }
 }
