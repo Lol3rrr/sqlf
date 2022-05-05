@@ -4,7 +4,7 @@ use crate::{
     fmt::{FmtBuilder, SelectBuilder},
     sql::Sql,
     verify::{RootTableDefinitions, VerifyError, VerifyTable},
-    Condition, Fields, Table,
+    Condition, Fields, Statement, Table,
 };
 
 /// A Select Statement
@@ -36,6 +36,24 @@ where
             .finish()
     }
 }
+impl<T, F, C> Statement for Select<T, F, C>
+where
+    T: Table,
+    F: Fields,
+    C: Condition,
+{
+    fn format<FF>(&self, fmt: &mut FF) -> Sql
+    where
+        FF: crate::fmt::Formatter,
+    {
+        fmt.select()
+            .table(&self.table)
+            .fields(&self.fields)
+            .condition(&self.condition)
+            .finish()
+    }
+}
+
 impl<T, F, C> VerifyTable for Select<T, F, C>
 where
     T: VerifyTable,

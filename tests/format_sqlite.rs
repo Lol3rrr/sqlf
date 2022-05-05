@@ -6,7 +6,7 @@ fn select() {
 
     let select = Select::new("test", (), &["test"]);
 
-    let result = formatter.format_select(&select);
+    let result = formatter.format(&select);
     dbg!(result);
 }
 
@@ -20,7 +20,7 @@ fn nested_select() {
         &["test"],
     );
 
-    let result = formatter.format_select(&select);
+    let result = formatter.format(&select);
     dbg!(result);
 }
 
@@ -30,6 +30,6 @@ fn conditional_select() {
 
     let select = Select::new("test", ("test", "value"), &["test"]);
 
-    let result = formatter.format_select(&select);
+    let result = formatter.format(&select);
     dbg!(result);
 }

@@ -116,3 +116,12 @@ pub trait Fields {
     where
         F: fmt::Formatter;
 }
+
+/// Represents an SQL Statement, this basically includes all the Things you would use as an End-User,
+/// like SELECTs, DELETEs, INSERTs, etc.
+pub trait Statement {
+    /// Formats the Expression using the provided Formatter
+    fn format<F>(&self, fmt: &mut F) -> Sql
+    where
+        F: fmt::Formatter;
+}

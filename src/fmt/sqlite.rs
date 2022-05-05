@@ -1,6 +1,6 @@
 //! TODO
 
-use crate::{sql::Sql, Condition, Fields, Select, Table};
+use crate::{sql::Sql, Condition, Fields, Statement, Table};
 
 use super::{ConditionBuilder, FieldsBuilder, FmtBuilder, Formatter, SelectBuilder};
 
@@ -14,11 +14,9 @@ impl SqliteFormatter {
     }
 
     /// Formats the given Select Statement
-    pub fn format_select<T, F, C>(&mut self, s: &Select<T, F, C>) -> Sql
+    pub fn format<S>(&mut self, s: &S) -> Sql
     where
-        T: Table,
-        F: Fields,
-        C: Condition,
+        S: Statement,
     {
         s.format(self)
     }
