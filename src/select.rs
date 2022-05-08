@@ -31,7 +31,13 @@ where
             ordering: ((), Order::Ascending),
         }
     }
-
+}
+impl<B, P, O> Select<B, P, O>
+where
+    B: SelectBase,
+    P: Predicate,
+    O: OrderExpression,
+{
     pub fn order<O2>(self, ordering: O2, order: Order) -> Select<B, P, O2>
     where
         O2: OrderExpression,
