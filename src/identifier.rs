@@ -1,4 +1,4 @@
-use crate::{sql::Sql, SelectBase};
+use crate::{sql::Sql, OrderExpression, SelectBase};
 
 /// An Identifier, like a Table or Column Name
 pub struct Identifier {
@@ -27,5 +27,10 @@ impl From<&str> for Identifier {
 impl SelectBase for Identifier {
     fn format(&self, _: &crate::fmt::Formatter) -> Sql {
         Sql::new(self.name.clone())
+    }
+}
+impl OrderExpression for Identifier {
+    fn format(&self, _: &crate::fmt::Formatter) -> Option<Sql> {
+        Some(Sql::new(&self.name))
     }
 }

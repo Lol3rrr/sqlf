@@ -13,6 +13,15 @@ pub trait Expression {
     fn format(&self, fmt: &Formatter) -> Sql;
 }
 
+pub trait OrderExpression {
+    fn format(&self, fmt: &Formatter) -> Option<Sql>;
+}
+impl OrderExpression for () {
+    fn format(&self, _: &Formatter) -> Option<Sql> {
+        None
+    }
+}
+
 /// Predicates allow for using Conditionals
 pub trait Predicate {
     fn format(&self, fmt: &Formatter) -> Option<Sql>;

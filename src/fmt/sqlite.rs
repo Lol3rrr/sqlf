@@ -1,4 +1,4 @@
-use crate::sql::Sql;
+use crate::{sql::Sql, Order};
 
 use super::FormatBackend;
 
@@ -19,13 +19,21 @@ impl Default for SqliteBackend {
 impl FormatBackend for SqliteBackend {
     fn format_select(
         &self,
-        base: crate::sql::Sql,
-        fields: crate::sql::Sql,
-        predicate: Option<crate::sql::Sql>,
+        base: Sql,
+        fields: Sql,
+        predicate: Option<Sql>,
+        ordering: Option<(Sql, Order)>,
     ) -> crate::sql::Sql {
-        match predicate {
+        let with_where = match predicate {
             Some(pred) => Sql::new(format!("SELECT {} FROM ({}) WHERE {}", fields, base, pred)),
             None => Sql::new(format!("SELECT {} FROM ({})", fields, base)),
+        };
+
+        match ordering {
+            Some((ord_sql, order)) => {
+                Sql::new(format!("{} ORDER BY {} {}", with_where, ord_sql, order))
+            }
+            None => with_where,
         }
     }
 

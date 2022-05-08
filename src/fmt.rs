@@ -1,10 +1,16 @@
-use crate::{sql::Sql, Identifier, Predicate, Query, SelectBase};
+use crate::{sql::Sql, Identifier, Order, OrderExpression, Predicate, Query, SelectBase};
 
 mod sqlite;
 pub use sqlite::SqliteBackend;
 
 pub trait FormatBackend {
-    fn format_select(&self, base: Sql, fields: Sql, predicate: Option<Sql>) -> Sql;
+    fn format_select(
+        &self,
+        base: Sql,
+        fields: Sql,
+        predicate: Option<Sql>,
+        ordering: Option<(Sql, Order)>,
+    ) -> Sql;
 
     fn format_parameter(&self) -> Sql;
 }
@@ -50,6 +56,7 @@ pub struct FormatSelect<'b> {
     base: Option<Sql>,
     fields: Option<Sql>,
     predicate: Option<Sql>,
+    ordering: Option<(Sql, Order)>,
 }
 
 impl<'b> FormatSelect<'b> {
@@ -60,6 +67,7 @@ impl<'b> FormatSelect<'b> {
             base: None,
             fields: None,
             predicate: None,
+            ordering: None,
         }
     }
 
@@ -75,7 +83,10 @@ impl<'b> FormatSelect<'b> {
     pub fn fields(mut self, fields: &[Identifier]) -> Self {
         let field_str = {
             let mut result = String::new();
-            let mut tmp = fields.iter().map(|id| id.format(self.formatter)).peekable();
+            let mut tmp = fields
+                .iter()
+                .map(|id| SelectBase::format(id, self.formatter))
+                .peekable();
 
             let mut next = tmp.next();
             while next.is_some() && tmp.peek().is_some() {
@@ -104,11 +115,25 @@ impl<'b> FormatSelect<'b> {
         self
     }
 
+    pub fn order_by<O>(mut self, ordering: &(O, Order)) -> Self
+    where
+        O: OrderExpression,
+    {
+        match ordering.0.format(self.formatter) {
+            Some(ord) => {
+                self.ordering = Some((ord, ordering.1.clone()));
+                self
+            }
+            None => self,
+        }
+    }
+
     pub fn finish(self) -> Sql {
         let base = self.base.unwrap();
         let fields = self.fields.unwrap();
         let predicate = self.predicate;
 
-        self.backend.format_select(base, fields, predicate)
+        self.backend
+            .format_select(base, fields, predicate, self.ordering)
     }
 }

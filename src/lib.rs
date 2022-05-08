@@ -20,6 +20,8 @@
 // #![warn(missing_docs)]
 
 mod traits;
+use std::fmt::Display;
+
 pub use traits::*;
 
 pub mod sql;
@@ -62,3 +64,17 @@ pub use create_table::CreateTable;
 pub mod fmt;
 
 // pub mod verify;
+
+#[derive(Debug, Clone)]
+pub enum Order {
+    Ascending,
+    Descending,
+}
+impl Display for Order {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ascending => write!(f, "ASC"),
+            Self::Descending => write!(f, "DESC"),
+        }
+    }
+}

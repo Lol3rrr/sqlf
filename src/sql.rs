@@ -17,10 +17,6 @@ impl Sql {
             content: content.into(),
         }
     }
-
-    pub(crate) fn is_empty(&self) -> bool {
-        self.content.is_empty()
-    }
 }
 
 impl Display for Sql {

@@ -1,6 +1,6 @@
 use sqlf::{
     fmt::{Formatter, SqliteBackend},
-    Identifier, Select,
+    Identifier, Order, Select,
 };
 
 #[test]
@@ -10,7 +10,8 @@ fn select() {
     let select = Select::new(Identifier::new("test"), vec!["test".into()], ());
 
     let result = formatter.formatq(&select);
-    dbg!(result);
+
+    assert_eq!("SELECT test FROM (test)", result.to_string());
 }
 
 #[test]
@@ -28,7 +29,11 @@ fn nested_select() {
     );
 
     let result = formatter.formatq(&select);
-    dbg!(result);
+
+    assert_eq!(
+        "SELECT test FROM (SELECT test,testing FROM (inner))",
+        result.to_string()
+    );
 }
 
 #[test]
@@ -42,5 +47,24 @@ fn conditional_select() {
     );
 
     let result = formatter.formatq(&select);
-    dbg!(result);
+
+    assert_eq!(
+        "SELECT test FROM (test) WHERE test=\"value\"",
+        result.to_string()
+    );
+}
+
+#[test]
+fn ordering_select() {
+    let formatter = Formatter::new(SqliteBackend::new());
+
+    let select = Select::new(Identifier::new("test"), vec!["test".into()], ())
+        .order(Identifier::new("other"), Order::Descending);
+
+    let result = formatter.formatq(&select);
+
+    assert_eq!(
+        "SELECT test FROM (test) ORDER BY other DESC",
+        result.to_string()
+    );
 }
