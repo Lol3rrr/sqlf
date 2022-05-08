@@ -1,11 +1,15 @@
-use crate::{Condition, Table};
+use crate::{Identifier, Predicate, Statement};
 
-/// A Delete Statement
-pub struct Delete<T, C>
-where
-    T: Table,
-    C: Condition,
-{
-    table: T,
-    condition: C,
+pub struct Delete<P> {
+    table: Identifier,
+    predicate: P,
 }
+impl<P> Delete<P>
+where
+    P: Predicate,
+{
+    pub fn new(table: Identifier, predicate: P) -> Self {
+        Self { table, predicate }
+    }
+}
+impl<P> Statement for Delete<P> where P: Predicate {}

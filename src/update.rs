@@ -1,12 +1,24 @@
-use crate::{Condition, Table};
+use crate::{Expression, Identifier, Predicate, Statement};
 
-/// A single Update Statement
-pub struct Update<T, C>
-where
-    T: Table,
-    C: Condition,
-{
-    table: T,
-    condition: C,
-    values: Vec<(String, String)>,
+pub struct Update<P> {
+    table: Identifier,
+    values: Vec<(Identifier, Box<dyn Expression>)>,
+    predicate: P,
 }
+impl<P> Update<P>
+where
+    P: Predicate,
+{
+    pub fn new(
+        table: Identifier,
+        values: Vec<(Identifier, Box<dyn Expression>)>,
+        predicate: P,
+    ) -> Self {
+        Self {
+            table,
+            predicate,
+            values,
+        }
+    }
+}
+impl<P> Statement for Update<P> where P: Predicate {}

@@ -1,67 +1,114 @@
-//! TODO
+use crate::{sql::Sql, Identifier, Predicate, Query, SelectBase};
 
-use crate::{sql::Sql, Condition, Fields, Table};
+mod sqlite;
+pub use sqlite::SqliteBackend;
 
-pub mod sqlite;
+pub trait FormatBackend {
+    fn format_select(&self, base: Sql, fields: Sql, predicate: Option<Sql>) -> Sql;
 
-/// An underlying Trait for the Formatting
-pub trait FmtBuilder {
-    /// Converts the current Builder into the final SQL String
-    fn finish(&mut self) -> Sql;
+    fn format_parameter(&self) -> Sql;
 }
 
-/// The Trait describing the Target Formatters
-pub trait Formatter {
-    /// The Builder for Select Queries
-    type SelectBuilder: SelectBuilder;
-    /// The Builder for Fields
-    type FieldsBuilder: FieldsBuilder;
-    /// The Builder for Conditionals in a Query
-    type ConditionBuilder: ConditionBuilder;
-
-    /// Obtains a Select Builder
-    fn select(&mut self) -> Self::SelectBuilder;
-    /// Obtains a Fields Builder
-    fn fields(&mut self) -> Self::FieldsBuilder;
-    /// Obtains a Conditional Builder
-    fn condition(&mut self) -> Self::ConditionBuilder;
+pub struct Formatter {
+    backend: Box<dyn FormatBackend>,
 }
 
-/// The Builder Trait for Select Queries
-pub trait SelectBuilder: FmtBuilder {
-    /// The Table used for the Select Query
-    fn table<'s, 'o, T>(&'s mut self, table: &T) -> &'o mut Self
+impl Formatter {
+    pub fn new<FB>(backend: FB) -> Self
     where
-        's: 'o,
-        T: Table;
+        FB: FormatBackend + 'static,
+    {
+        Self {
+            backend: Box::new(backend),
+        }
+    }
 
-    /// The Fields being selected
-    fn fields<'s, 'o, F>(&'s mut self, fields: &F) -> &'o mut Self
+    pub fn formatq<Q>(&self, query: &Q) -> Sql
     where
-        's: 'o,
-        F: Fields;
+        Q: Query,
+    {
+        query.format(self)
+    }
 
-    /// The Condition for the Select
-    fn condition<'s, 'o, C>(&'s mut self, condition: &C) -> &'o mut Self
-    where
-        's: 'o,
-        C: Condition;
+    pub fn select(&self) -> FormatSelect<'_> {
+        FormatSelect::new(self)
+    }
+
+    pub fn string_literal(&self, value: &str) -> Sql {
+        Sql::new(format!("\"{}\"", value))
+    }
+
+    pub fn parameter(&self) -> Sql {
+        self.backend.format_parameter()
+    }
 }
 
-/// The Builder Trait for Fields
-pub trait FieldsBuilder: FmtBuilder {
-    /// Adds a new Field
-    fn add_field(&mut self, name: String);
+pub struct FormatSelect<'b> {
+    formatter: &'b Formatter,
+    backend: &'b dyn FormatBackend,
+
+    base: Option<Sql>,
+    fields: Option<Sql>,
+    predicate: Option<Sql>,
 }
 
-/// The Builder Trait for Conditionals
-pub trait ConditionBuilder: FmtBuilder {
-    /// Generates the SQL for an Equals comparison between the Two elements
-    fn equal(self, left: Sql, right: Sql) -> Sql;
+impl<'b> FormatSelect<'b> {
+    fn new(formatter: &'b Formatter) -> Self {
+        Self {
+            formatter,
+            backend: formatter.backend.as_ref(),
+            base: None,
+            fields: None,
+            predicate: None,
+        }
+    }
 
-    /// Combines the two sides with a logical AND
-    fn and(self, left: Sql, right: Sql) -> Sql;
+    pub fn base<B>(mut self, base: &B) -> Self
+    where
+        B: SelectBase,
+    {
+        self.base = Some(base.format(self.formatter));
 
-    /// Combines the two sides with a logical OR
-    fn or(self, left: Sql, right: Sql) -> Sql;
+        self
+    }
+
+    pub fn fields(mut self, fields: &[Identifier]) -> Self {
+        let field_str = {
+            let mut result = String::new();
+            let mut tmp = fields.iter().map(|id| id.format(self.formatter)).peekable();
+
+            let mut next = tmp.next();
+            while next.is_some() && tmp.peek().is_some() {
+                result.push_str(&format!("{}", next.unwrap()));
+                result.push(',');
+
+                next = tmp.next();
+            }
+
+            if let Some(last) = next {
+                result.push_str(&format!("{}", last))
+            }
+
+            result
+        };
+        self.fields = Some(Sql::new(field_str));
+
+        self
+    }
+
+    pub fn predicate<P>(mut self, predicate: &P) -> Self
+    where
+        P: Predicate,
+    {
+        self.predicate = predicate.format(self.formatter);
+        self
+    }
+
+    pub fn finish(self) -> Sql {
+        let base = self.base.unwrap();
+        let fields = self.fields.unwrap();
+        let predicate = self.predicate;
+
+        self.backend.format_select(base, fields, predicate)
+    }
 }

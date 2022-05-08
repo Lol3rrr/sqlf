@@ -1,10 +1,24 @@
-use crate::Table;
+use crate::{Expression, Identifier, Predicate, Statement};
 
-/// An Insert Statement
-pub struct Insert<T>
-where
-    T: Table,
-{
-    table: T,
-    values: Vec<(String, String)>,
+pub struct Insert<P> {
+    table: Identifier,
+    values: Vec<(Identifier, Box<dyn Expression>)>,
+    predicate: P,
 }
+impl<P> Insert<P>
+where
+    P: Predicate,
+{
+    pub fn new(
+        table: Identifier,
+        values: Vec<(Identifier, Box<dyn Expression>)>,
+        predicate: P,
+    ) -> Self {
+        Self {
+            table,
+            values,
+            predicate,
+        }
+    }
+}
+impl<P> Statement for Insert<P> where P: Predicate {}

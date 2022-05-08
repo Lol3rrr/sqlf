@@ -1,97 +1,54 @@
-use std::collections::HashSet;
+use crate::{Identifier, Predicate, Query, SelectBase};
 
-use crate::{
-    fmt::{FmtBuilder, SelectBuilder},
-    sql::Sql,
-    verify::{RootTableDefinitions, VerifyError, VerifyTable},
-    Condition, Fields, Statement, Table,
-};
-
-/// A Select Statement
-pub struct Select<T, F, C>
-where
-    T: Table,
-    F: Fields,
-    C: Condition,
-{
-    table: T,
-    fields: F,
-    condition: C,
+/// A simple Select Query
+///
+/// # Example
+/// ```rust
+/// use sqlf::{Identifier, Select};
+///
+/// let query = Select::new(Identifier::from("some_table"), vec![Identifier::from("first")], ());
+/// ```
+pub struct Select<B, P> {
+    base: B,
+    fields: Vec<Identifier>,
+    predicate: P,
 }
 
-impl<T, F, C> Table for Select<T, F, C>
+impl<B, P> Select<B, P>
 where
-    T: Table,
-    F: Fields,
-    C: Condition,
+    B: SelectBase,
+    P: Predicate,
 {
-    fn format<FF>(&self, fmt: &mut FF) -> Sql
+    pub fn new<F>(base: B, fields: F, predicate: P) -> Self
     where
-        FF: crate::fmt::Formatter,
+        F: Into<Vec<Identifier>>,
     {
-        fmt.select()
-            .table(&self.table)
-            .fields(&self.fields)
-            .condition(&self.condition)
-            .finish()
-    }
-}
-impl<T, F, C> Statement for Select<T, F, C>
-where
-    T: Table,
-    F: Fields,
-    C: Condition,
-{
-    fn format<FF>(&self, fmt: &mut FF) -> Sql
-    where
-        FF: crate::fmt::Formatter,
-    {
-        fmt.select()
-            .table(&self.table)
-            .fields(&self.fields)
-            .condition(&self.condition)
-            .finish()
-    }
-}
-
-impl<T, F, C> VerifyTable for Select<T, F, C>
-where
-    T: VerifyTable,
-    F: Fields,
-    C: Condition,
-{
-    fn get_fields(
-        &self,
-        roots: &RootTableDefinitions,
-    ) -> Result<std::collections::HashSet<String>, VerifyError> {
-        let fields = self.table.get_fields(roots)?;
-
-        let mut result = HashSet::new();
-        for field in self.fields.to_iterator() {
-            fields
-                .get(&field)
-                .ok_or_else(|| VerifyError::MissingField {
-                    field: field.clone(),
-                })?;
-            result.insert(field);
-        }
-
-        Ok(result)
-    }
-}
-
-impl<T, F, C> Select<T, F, C>
-where
-    T: Table,
-    F: Fields,
-    C: Condition,
-{
-    /// Creates a new Select Query
-    pub fn new(table: T, condition: C, fields: F) -> Self {
         Self {
-            table,
-            fields,
-            condition,
+            base,
+            fields: fields.into(),
+            predicate,
         }
+    }
+}
+impl<B, P> Query for Select<B, P>
+where
+    B: SelectBase,
+    P: Predicate,
+{
+    fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
+        fmt.select()
+            .base(&self.base)
+            .fields(&self.fields)
+            .predicate(&self.predicate)
+            .finish()
+    }
+}
+impl<B, P> SelectBase for Select<B, P>
+where
+    B: SelectBase,
+    P: Predicate,
+{
+    fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
+        Query::format(self, fmt)
     }
 }

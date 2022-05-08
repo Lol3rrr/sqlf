@@ -1,25 +1,42 @@
-use sqlf::{Condition, Select};
+use sqlf::{Identifier, Literal, Predicate, Select};
 
 fn main() {
-    let mut sqlite_formatter = sqlf::fmt::sqlite::SqliteFormatter::new();
+    let formatter = sqlf::fmt::Formatter::new(sqlf::fmt::SqliteBackend::new());
 
-    let root_query = Select::new("tests", (), &["first"]);
-    dbg!(sqlite_formatter.format(&root_query));
+    let root_query = Select::new(
+        Identifier::from("test"),
+        vec![Identifier::from("first")],
+        (),
+    );
+    dbg!(formatter.formatq(&root_query));
 
     let nested_query = Select::new(
-        Select::new("root", (), &["testing"]),
+        Select::new(Identifier::from("base"), vec!["testing".into()], ()),
+        vec!["test".into()],
         (),
-        vec!["test".to_string()],
     );
-    dbg!(sqlite_formatter.format(&nested_query));
+    dbg!(formatter.formatq(&nested_query));
 
-    let with_condition = Select::new("testing", ("name", "value"), &["first"]);
-    dbg!(sqlite_formatter.format(&with_condition));
+    let with_condition = Select::new(
+        Identifier::from("testing"),
+        vec!["first".into()],
+        (Identifier::from("name"), Literal::from("value")),
+    );
+    dbg!(formatter.formatq(&with_condition));
 
-    let with_and_condition =
-        Select::new("testing", ("first", "1").and(("second", "2")), &["first"]);
-    dbg!(sqlite_formatter.format(&with_and_condition));
+    let with_and_condition = Select::new(
+        Identifier::from("testing"),
+        vec!["first".into()],
+        (Identifier::from("first"), Literal::from("1"))
+            .and((Identifier::from("second"), Literal::from("2"))),
+    );
+    dbg!(formatter.formatq(&with_and_condition));
 
-    let with_or_condition = Select::new("testing", ("first", "1").or(("second", "2")), &["first"]);
-    dbg!(sqlite_formatter.format(&with_or_condition));
+    let with_or_condition = Select::new(
+        Identifier::from("testing"),
+        vec!["first".into()],
+        (Identifier::from("first"), Literal::from("1"))
+            .or((Identifier::from("second"), Literal::from("2"))),
+    );
+    dbg!(formatter.formatq(&with_or_condition));
 }
