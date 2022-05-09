@@ -19,6 +19,8 @@ pub trait FormatBackend {
 
     fn format_delete(&self, table: Sql, predicate: Option<Sql>) -> Sql;
 
+    fn format_update(&self, table: Sql, fields: Vec<(Sql, Sql)>, predicate: Option<Sql>) -> Sql;
+
     fn format_parameter(&self) -> Sql;
 }
 
@@ -57,6 +59,9 @@ impl Formatter {
     }
     pub fn delete(&self) -> FormatDelete<'_> {
         FormatDelete::new(self)
+    }
+    pub fn update(&self) -> FormatUpdate<'_> {
+        FormatUpdate::new(self)
     }
 
     pub fn string_literal(&self, value: &str) -> Sql {
@@ -244,5 +249,60 @@ impl<'b> FormatDelete<'b> {
             .expect("The Table should be set for a DELETE Statement");
 
         self.backend.format_delete(table, self.predicate)
+    }
+}
+
+pub struct FormatUpdate<'b> {
+    formatter: &'b Formatter,
+    backend: &'b dyn FormatBackend,
+
+    table: Option<Sql>,
+    field_values: Option<Vec<(Sql, Sql)>>,
+    predicate: Option<Sql>,
+}
+
+impl<'b> FormatUpdate<'b> {
+    fn new(formatter: &'b Formatter) -> Self {
+        Self {
+            formatter,
+            backend: formatter.backend.as_ref(),
+
+            table: None,
+            field_values: None,
+            predicate: None,
+        }
+    }
+
+    pub fn table(mut self, table: &Identifier) -> Self {
+        self.table = Some(Sql::new(table.as_ref()));
+        self
+    }
+
+    pub fn field_values<I>(mut self, field_values: I) -> Self
+    where
+        I: Iterator<Item = (Identifier, Box<dyn Expression>)>,
+    {
+        self.field_values = Some(
+            field_values
+                .map(|(id, exp)| (Sql::new(id.as_ref()), exp.format(self.formatter)))
+                .collect(),
+        );
+        self
+    }
+
+    pub fn predicate<P>(mut self, predicate: &P) -> Self
+    where
+        P: Predicate,
+    {
+        self.predicate = predicate.format(self.formatter);
+        self
+    }
+
+    pub fn finish(self) -> Sql {
+        let table = self.table.expect("");
+        let field_values = self.field_values.expect("");
+
+        self.backend
+            .format_update(table, field_values, self.predicate)
     }
 }

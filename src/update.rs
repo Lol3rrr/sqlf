@@ -26,6 +26,14 @@ where
     P: Predicate,
 {
     fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
-        todo!()
+        fmt.update()
+            .table(&self.table)
+            .field_values(
+                self.values
+                    .iter()
+                    .map(|(id, exp)| (id.clone(), exp.boxed())),
+            )
+            .predicate(&self.predicate)
+            .finish()
     }
 }

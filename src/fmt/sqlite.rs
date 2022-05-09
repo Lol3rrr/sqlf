@@ -60,4 +60,19 @@ impl FormatBackend for SqliteBackend {
             None => Sql::new(format!("DELETE FROM ({})", table)),
         }
     }
+
+    fn format_update(&self, table: Sql, fields: Vec<(Sql, Sql)>, predicate: Option<Sql>) -> Sql {
+        let field_values: String = fields
+            .into_iter()
+            .map(|(id, exp)| format!("{}={}", id, exp))
+            .collect();
+
+        match predicate {
+            Some(pred) => Sql::new(format!(
+                "UPDATE {} SET {} WHERE {}",
+                table, field_values, pred
+            )),
+            None => Sql::new(format!("UPDATE {} SET {}", table, field_values)),
+        }
+    }
 }
