@@ -66,31 +66,39 @@ impl Formatter {
         stmnt.format(self)
     }
 
+    /// Obtains a Select-Formatter
     pub fn select(&self) -> FormatSelect<'_> {
         FormatSelect::new(self)
     }
+    /// Obtains an Insert-Formatter
     pub fn insert(&self) -> FormatInsert<'_> {
         FormatInsert::new(self)
     }
+    /// Obtains a Delete-Formatter
     pub fn delete(&self) -> FormatDelete<'_> {
         FormatDelete::new(self)
     }
+    /// Obtains an Update-Formatter
     pub fn update(&self) -> FormatUpdate<'_> {
         FormatUpdate::new(self)
     }
 
+    /// Formats a String-Literal
     pub fn string_literal(&self, value: &str) -> Sql {
         Sql::new(format!("\"{}\"", value))
     }
+    /// Formats a Number-Literal
     pub fn number_literal(&self, numb: i64) -> Sql {
         Sql::new(format!("{}", numb))
     }
 
+    /// Obtains the Sql for an anonymous Parameter
     pub fn parameter(&self) -> Sql {
         self.backend.format_parameter()
     }
 }
 
+/// The Formatter to configure a Select Query
 pub struct FormatSelect<'b> {
     formatter: &'b Formatter,
     backend: &'b dyn FormatBackend,
@@ -113,6 +121,7 @@ impl<'b> FormatSelect<'b> {
         }
     }
 
+    /// Updates the Base of the Select Query
     pub fn base<B>(mut self, base: &B) -> Self
     where
         B: SelectBase,
@@ -122,6 +131,7 @@ impl<'b> FormatSelect<'b> {
         self
     }
 
+    /// Updates the Fields that should be selected
     pub fn fields(mut self, fields: &[Identifier]) -> Self {
         let field_str = {
             let mut result = String::new();
@@ -149,6 +159,7 @@ impl<'b> FormatSelect<'b> {
         self
     }
 
+    /// Updates the Predicate for the Query
     pub fn predicate<P>(mut self, predicate: &P) -> Self
     where
         P: Predicate,
@@ -157,6 +168,7 @@ impl<'b> FormatSelect<'b> {
         self
     }
 
+    /// Updates the Ordering of the Results
     pub fn order_by<O>(mut self, ordering: &(O, Order)) -> Self
     where
         O: OrderExpression,
@@ -170,6 +182,7 @@ impl<'b> FormatSelect<'b> {
         }
     }
 
+    /// Converts the configured Formatter into the final SQL
     pub fn finish(self) -> Sql {
         let base = self.base.unwrap();
         let fields = self.fields.unwrap();
@@ -180,6 +193,7 @@ impl<'b> FormatSelect<'b> {
     }
 }
 
+/// The Formatter to configure an Insert Statement
 pub struct FormatInsert<'b> {
     formatter: &'b Formatter,
     backend: &'b dyn FormatBackend,
@@ -199,11 +213,13 @@ impl<'b> FormatInsert<'b> {
         }
     }
 
+    /// Updates the Table on which the Statement should be executed on
     pub fn table(mut self, table: &Identifier) -> Self {
         self.table = Some(Sql::new(table.as_ref()));
         self
     }
 
+    /// Updates the Fields and the Values that should be inserted
     pub fn field_values<I>(mut self, field_val_iter: I) -> Self
     where
         I: Iterator<Item = (Identifier, Box<dyn Expression>)>,
@@ -216,6 +232,7 @@ impl<'b> FormatInsert<'b> {
         self
     }
 
+    /// Converts the configured Formatter into the final SQL
     pub fn finish(self) -> Sql {
         let table = self.table.expect("FormatInsert should have a table set");
         let fields = self
@@ -226,6 +243,7 @@ impl<'b> FormatInsert<'b> {
     }
 }
 
+/// The Formatter to configure a Delete Statement
 pub struct FormatDelete<'b> {
     formatter: &'b Formatter,
     backend: &'b dyn FormatBackend,
@@ -245,11 +263,13 @@ impl<'b> FormatDelete<'b> {
         }
     }
 
+    /// Updates the Table from which entries should be deleted
     pub fn table(mut self, table: &Identifier) -> Self {
         self.table = Some(Sql::new(table.as_ref()));
         self
     }
 
+    /// Updates the Predicate that determines which Rows should be deleted
     pub fn predicate<P>(mut self, pred: &P) -> Self
     where
         P: Predicate,
@@ -258,6 +278,7 @@ impl<'b> FormatDelete<'b> {
         self
     }
 
+    /// Converts the configured Formatter into the final SQL
     pub fn finish(self) -> Sql {
         let table = self
             .table
@@ -267,6 +288,7 @@ impl<'b> FormatDelete<'b> {
     }
 }
 
+/// The Formatter to configure an Update Statement
 pub struct FormatUpdate<'b> {
     formatter: &'b Formatter,
     backend: &'b dyn FormatBackend,
@@ -288,11 +310,13 @@ impl<'b> FormatUpdate<'b> {
         }
     }
 
+    /// Updates the Table on which this Statement should be executed
     pub fn table(mut self, table: &Identifier) -> Self {
         self.table = Some(Sql::new(table.as_ref()));
         self
     }
 
+    /// Updates the Fields and the Values with which the Update should be executed
     pub fn field_values<I>(mut self, field_values: I) -> Self
     where
         I: Iterator<Item = (Identifier, Box<dyn Expression>)>,
@@ -305,6 +329,7 @@ impl<'b> FormatUpdate<'b> {
         self
     }
 
+    /// Updates the Predicate used for determining which entries should be updated
     pub fn predicate<P>(mut self, predicate: &P) -> Self
     where
         P: Predicate,
@@ -313,6 +338,7 @@ impl<'b> FormatUpdate<'b> {
         self
     }
 
+    /// Converts the configured Formatter into the final SQL
     pub fn finish(self) -> Sql {
         let table = self.table.expect("");
         let field_values = self.field_values.expect("");
