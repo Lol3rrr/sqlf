@@ -17,6 +17,9 @@ where
     P: Predicate,
 {
     fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
-        todo!()
+        fmt.delete()
+            .table(&self.table)
+            .predicate(&self.predicate)
+            .finish()
     }
 }

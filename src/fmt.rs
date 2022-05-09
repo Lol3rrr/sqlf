@@ -17,6 +17,8 @@ pub trait FormatBackend {
 
     fn format_insert(&self, table: Sql, fields: Vec<(Sql, Sql)>) -> Sql;
 
+    fn format_delete(&self, table: Sql, predicate: Option<Sql>) -> Sql;
+
     fn format_parameter(&self) -> Sql;
 }
 
@@ -50,6 +52,12 @@ impl Formatter {
     pub fn select(&self) -> FormatSelect<'_> {
         FormatSelect::new(self)
     }
+    pub fn insert(&self) -> FormatInsert<'_> {
+        FormatInsert::new(self)
+    }
+    pub fn delete(&self) -> FormatDelete<'_> {
+        FormatDelete::new(self)
+    }
 
     pub fn string_literal(&self, value: &str) -> Sql {
         Sql::new(format!("\"{}\"", value))
@@ -60,9 +68,6 @@ impl Formatter {
 
     pub fn parameter(&self) -> Sql {
         self.backend.format_parameter()
-    }
-    pub fn insert(&self) -> FormatInsert<'_> {
-        FormatInsert::new(self)
     }
 }
 
@@ -198,5 +203,46 @@ impl<'b> FormatInsert<'b> {
             .expect("FormatInsert should have Field-Values set");
 
         self.backend.format_insert(table, fields)
+    }
+}
+
+pub struct FormatDelete<'b> {
+    formatter: &'b Formatter,
+    backend: &'b dyn FormatBackend,
+
+    table: Option<Sql>,
+    predicate: Option<Sql>,
+}
+
+impl<'b> FormatDelete<'b> {
+    fn new(formatter: &'b Formatter) -> Self {
+        Self {
+            formatter,
+            backend: formatter.backend.as_ref(),
+
+            table: None,
+            predicate: None,
+        }
+    }
+
+    pub fn table(mut self, table: &Identifier) -> Self {
+        self.table = Some(Sql::new(table.as_ref()));
+        self
+    }
+
+    pub fn predicate<P>(mut self, pred: &P) -> Self
+    where
+        P: Predicate,
+    {
+        self.predicate = pred.format(self.formatter);
+        self
+    }
+
+    pub fn finish(self) -> Sql {
+        let table = self
+            .table
+            .expect("The Table should be set for a DELETE Statement");
+
+        self.backend.format_delete(table, self.predicate)
     }
 }

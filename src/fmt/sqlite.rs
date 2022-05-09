@@ -53,4 +53,11 @@ impl FormatBackend for SqliteBackend {
             table, fields, values
         ))
     }
+
+    fn format_delete(&self, table: Sql, predicate: Option<Sql>) -> Sql {
+        match predicate {
+            Some(pred) => Sql::new(format!("DELETE FROM ({}) WHERE {}", table, pred)),
+            None => Sql::new(format!("DELETE FROM ({})", table)),
+        }
+    }
 }
