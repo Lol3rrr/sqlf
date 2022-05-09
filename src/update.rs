@@ -21,4 +21,11 @@ where
         }
     }
 }
-impl<P> Statement for Update<P> where P: Predicate {}
+impl<P> Statement for Update<P>
+where
+    P: Predicate,
+{
+    fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
+        todo!()
+    }
+}

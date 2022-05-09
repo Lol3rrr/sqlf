@@ -12,4 +12,11 @@ where
         Self { table, predicate }
     }
 }
-impl<P> Statement for Delete<P> where P: Predicate {}
+impl<P> Statement for Delete<P>
+where
+    P: Predicate,
+{
+    fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
+        todo!()
+    }
+}

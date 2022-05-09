@@ -6,11 +6,17 @@ impl Expression for Parameter {
     fn format(&self, fmt: &Formatter) -> Sql {
         fmt.parameter()
     }
+
+    fn boxed(&self) -> Box<dyn Expression> {
+        Box::new(Self {})
+    }
 }
 
 /// An expression
 pub trait Expression {
     fn format(&self, fmt: &Formatter) -> Sql;
+
+    fn boxed(&self) -> Box<dyn Expression>;
 }
 
 pub trait OrderExpression {
@@ -49,7 +55,9 @@ pub trait Query {
 }
 
 /// A Statement updates or inserts Data
-pub trait Statement {}
+pub trait Statement {
+    fn format(&self, fmt: &Formatter) -> Sql;
+}
 
 /// This Trait is used to differentiate between Queries and Table names as both can be used for the
 /// Base of the Select Operation

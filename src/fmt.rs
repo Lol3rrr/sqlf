@@ -1,4 +1,7 @@
-use crate::{sql::Sql, Identifier, Order, OrderExpression, Predicate, Query, SelectBase};
+use crate::{
+    sql::Sql, Expression, Identifier, Order, OrderExpression, Predicate, Query, SelectBase,
+    Statement,
+};
 
 mod sqlite;
 pub use sqlite::SqliteBackend;
@@ -11,6 +14,8 @@ pub trait FormatBackend {
         predicate: Option<Sql>,
         ordering: Option<(Sql, Order)>,
     ) -> Sql;
+
+    fn format_insert(&self, table: Sql, fields: Vec<(Sql, Sql)>) -> Sql;
 
     fn format_parameter(&self) -> Sql;
 }
@@ -35,6 +40,12 @@ impl Formatter {
     {
         query.format(self)
     }
+    pub fn formats<S>(&self, stmnt: &S) -> Sql
+    where
+        S: Statement,
+    {
+        stmnt.format(self)
+    }
 
     pub fn select(&self) -> FormatSelect<'_> {
         FormatSelect::new(self)
@@ -43,9 +54,15 @@ impl Formatter {
     pub fn string_literal(&self, value: &str) -> Sql {
         Sql::new(format!("\"{}\"", value))
     }
+    pub fn number_literal(&self, numb: i64) -> Sql {
+        Sql::new(format!("{}", numb))
+    }
 
     pub fn parameter(&self) -> Sql {
         self.backend.format_parameter()
+    }
+    pub fn insert(&self) -> FormatInsert<'_> {
+        FormatInsert::new(self)
     }
 }
 
@@ -135,5 +152,51 @@ impl<'b> FormatSelect<'b> {
 
         self.backend
             .format_select(base, fields, predicate, self.ordering)
+    }
+}
+
+pub struct FormatInsert<'b> {
+    formatter: &'b Formatter,
+    backend: &'b dyn FormatBackend,
+
+    table: Option<Sql>,
+    field_values: Option<Vec<(Sql, Sql)>>,
+}
+
+impl<'b> FormatInsert<'b> {
+    fn new(formatter: &'b Formatter) -> Self {
+        Self {
+            formatter,
+            backend: formatter.backend.as_ref(),
+
+            table: None,
+            field_values: None,
+        }
+    }
+
+    pub fn table(mut self, table: &Identifier) -> Self {
+        self.table = Some(Sql::new(table.as_ref()));
+        self
+    }
+
+    pub fn field_values<I>(mut self, field_val_iter: I) -> Self
+    where
+        I: Iterator<Item = (Identifier, Box<dyn Expression>)>,
+    {
+        let fields: Vec<_> = field_val_iter
+            .map(|(id, exp)| (Sql::new(id.as_ref()), exp.format(self.formatter)))
+            .collect();
+        self.field_values = Some(fields);
+
+        self
+    }
+
+    pub fn finish(self) -> Sql {
+        let table = self.table.expect("FormatInsert should have a table set");
+        let fields = self
+            .field_values
+            .expect("FormatInsert should have Field-Values set");
+
+        self.backend.format_insert(table, fields)
     }
 }

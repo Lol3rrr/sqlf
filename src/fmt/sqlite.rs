@@ -40,4 +40,17 @@ impl FormatBackend for SqliteBackend {
     fn format_parameter(&self) -> Sql {
         Sql::new("?")
     }
+
+    fn format_insert(&self, table: Sql, fields: Vec<(Sql, Sql)>) -> Sql {
+        let (fields, values): (String, String) = fields
+            .into_iter()
+            .map(|(f, e)| (f.to_string(), e.to_string()))
+            .intersperse_with(|| (",".to_string(), ",".to_string()))
+            .unzip();
+
+        Sql::new(format!(
+            "INSERT INTO {} ({}) VALUES ({})",
+            table, fields, values
+        ))
+    }
 }

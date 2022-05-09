@@ -1,6 +1,7 @@
 use crate::Expression;
 
 /// A Literal Value
+#[derive(Debug, Clone)]
 pub enum Literal {
     /// A String Literal
     String(String),
@@ -10,9 +11,13 @@ pub enum Literal {
 impl Expression for Literal {
     fn format(&self, fmt: &crate::fmt::Formatter) -> crate::sql::Sql {
         match self {
-            Self::String(content) => fmt.string_literal(&content),
-            Self::Number(value) => todo!("Format Number Literal"),
+            Self::String(content) => fmt.string_literal(content),
+            Self::Number(value) => fmt.number_literal(*value),
         }
+    }
+
+    fn boxed(&self) -> Box<dyn Expression> {
+        Box::new(self.clone())
     }
 }
 impl From<String> for Literal {

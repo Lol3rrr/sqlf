@@ -1,6 +1,7 @@
 use crate::{sql::Sql, OrderExpression, SelectBase};
 
 /// An Identifier, like a Table or Column Name
+#[derive(Debug, Clone)]
 pub struct Identifier {
     name: String,
 }
@@ -22,6 +23,16 @@ impl From<&str> for Identifier {
         Self {
             name: name.to_string(),
         }
+    }
+}
+impl From<Identifier> for String {
+    fn from(raw: Identifier) -> Self {
+        raw.name
+    }
+}
+impl AsRef<str> for Identifier {
+    fn as_ref(&self) -> &str {
+        &self.name
     }
 }
 impl SelectBase for Identifier {
