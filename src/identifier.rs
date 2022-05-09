@@ -6,6 +6,7 @@ pub struct Identifier {
     name: String,
 }
 impl Identifier {
+    /// Creates a new Identifier
     pub fn new<N>(name: N) -> Self
     where
         N: Into<String>,

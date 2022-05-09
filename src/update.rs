@@ -1,5 +1,6 @@
 use crate::{Expression, Identifier, Predicate, Statement};
 
+/// The Update Statement
 pub struct Update<P> {
     table: Identifier,
     values: Vec<(Identifier, Box<dyn Expression>)>,
@@ -9,6 +10,7 @@ impl<P> Update<P>
 where
     P: Predicate,
 {
+    /// Creates a new Query based on the given Information
     pub fn new(
         table: Identifier,
         values: Vec<(Identifier, Box<dyn Expression>)>,

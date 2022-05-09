@@ -14,6 +14,7 @@ impl Predicate for (Identifier, Literal) {
     }
 }
 
+/// Combines to other Predicates with AND
 pub struct And<L, R> {
     left: L,
     right: R,
@@ -24,6 +25,7 @@ where
     L: Predicate,
     R: Predicate,
 {
+    /// Creates the new Combination
     pub fn new(left: L, right: R) -> Self {
         Self { left, right }
     }
@@ -47,6 +49,7 @@ where
     }
 }
 
+/// Combines two Predicates using OR
 pub struct Or<L, R> {
     left: L,
     right: R,
@@ -57,6 +60,7 @@ where
     L: Predicate,
     R: Predicate,
 {
+    /// Creates a new Combination
     pub fn new(left: L, right: R) -> Self {
         Self { left, right }
     }

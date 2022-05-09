@@ -2,9 +2,11 @@ use crate::{sql::Sql, Order};
 
 use super::FormatBackend;
 
+/// The Formatting Backend for Sqlite
 pub struct SqliteBackend {}
 
 impl SqliteBackend {
+    /// Creates a new Instance of the Backend
     pub fn new() -> Self {
         Self {}
     }

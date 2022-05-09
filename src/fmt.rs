@@ -1,3 +1,7 @@
+//! Contains all the Formatting related things.
+//! This mainly concerns how we can provide a uniform interface to create the final Queries
+//! regardless of the flavor of the underlying target database.
+
 use crate::{
     sql::Sql, Expression, Identifier, Order, OrderExpression, Predicate, Query, SelectBase,
     Statement,
@@ -6,7 +10,9 @@ use crate::{
 mod sqlite;
 pub use sqlite::SqliteBackend;
 
+/// Describes the Interface for a Formatting Backend
 pub trait FormatBackend {
+    /// Formats a Select Query with the given information
     fn format_select(
         &self,
         base: Sql,
@@ -15,20 +21,26 @@ pub trait FormatBackend {
         ordering: Option<(Sql, Order)>,
     ) -> Sql;
 
+    /// Formats an Insert Statement with the given Information
     fn format_insert(&self, table: Sql, fields: Vec<(Sql, Sql)>) -> Sql;
 
+    /// Formats a Delete Statement with the given Information
     fn format_delete(&self, table: Sql, predicate: Option<Sql>) -> Sql;
 
+    /// Formats an Update Statement with the given Information
     fn format_update(&self, table: Sql, fields: Vec<(Sql, Sql)>, predicate: Option<Sql>) -> Sql;
 
+    /// Formats an anonymus Parameter
     fn format_parameter(&self) -> Sql;
 }
 
+/// The Formatter
 pub struct Formatter {
     backend: Box<dyn FormatBackend>,
 }
 
 impl Formatter {
+    /// Creates a new Formatter using the given Backend for final formatting
     pub fn new<FB>(backend: FB) -> Self
     where
         FB: FormatBackend + 'static,
@@ -38,12 +50,15 @@ impl Formatter {
         }
     }
 
+    /// Formats the given Query
     pub fn formatq<Q>(&self, query: &Q) -> Sql
     where
         Q: Query,
     {
         query.format(self)
     }
+
+    /// Formats the given Statement
     pub fn formats<S>(&self, stmnt: &S) -> Sql
     where
         S: Statement,

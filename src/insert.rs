@@ -1,10 +1,12 @@
 use crate::{Expression, Identifier, Statement};
 
+/// The Insert Statement
 pub struct Insert {
     table: Identifier,
     values: Vec<(Identifier, Box<dyn Expression>)>,
 }
 impl Insert {
+    /// Creates a new Statement
     pub fn new(table: Identifier, values: Vec<(Identifier, Box<dyn Expression>)>) -> Self {
         Self { table, values }
     }

@@ -20,6 +20,7 @@ where
     B: SelectBase,
     P: Predicate,
 {
+    /// Creates a new Select Query
     pub fn new<F>(base: B, fields: F, predicate: P) -> Self
     where
         F: Into<Vec<Identifier>>,
@@ -38,6 +39,7 @@ where
     P: Predicate,
     O: OrderExpression,
 {
+    /// Sets the Ordering of the Select Query to the given Order
     pub fn order<O2>(self, ordering: O2, order: Order) -> Select<B, P, O2>
     where
         O2: OrderExpression,

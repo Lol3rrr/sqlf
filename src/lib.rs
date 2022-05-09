@@ -17,7 +17,7 @@
 //! assert_eq!("SELECT name FROM (users)".to_string(), sql_str);
 //! ```
 #![feature(iter_intersperse)]
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 mod traits;
 use std::fmt::Display;
@@ -65,9 +65,12 @@ pub mod fmt;
 
 // pub mod verify;
 
+/// This describes the Ordering of results
 #[derive(Debug, Clone)]
 pub enum Order {
+    /// The Results should be ordered in ascending order
     Ascending,
+    /// The Results should be ordered in descending order
     Descending,
 }
 impl Display for Order {
